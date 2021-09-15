@@ -15,7 +15,7 @@ uses
     end;
 
   type
-    TElasticCLient = class
+    TElasticClient = class(TObject)
     private
       NetHTTPClient: TNetHTTPClient;
       BaseUrl:String;
@@ -48,10 +48,13 @@ uses
       //search
       function _search(body:string): string; overload;
       function _search(body:string; index:string): string; overload;
-
       function _searchEX(reqest:string): IHTTPResponse;
-       //
+       //send
       function _bulk(body:string; IndexName:String):IHTTPResponse;
+      // cluster
+      function _cluster_health:IHTTPResponse;
+      ///
+      function GET(url:string):IHTTPResponse;
     end;
 
 function Guid:string;
@@ -76,6 +79,8 @@ end;
 
 constructor TElasticCLient.Create;
 begin
+  inherited Create;
+
   NetHTTPClient := TNetHTTPClient.Create(nil);
   NetHTTPClient.ContentType       :=  'application/json';
   NetHTTPClient.AcceptCharSet     :=  'UTF-8';
@@ -140,6 +145,12 @@ begin
   end;
 
   //
+end;
+
+
+function TElasticCLient.GET(url:string):IHTTPResponse;
+begin
+  result:=NetHTTPClient.GET(url);
 end;
 
 function TElasticCLient._searchEX(reqest:string):IHTTPResponse;
@@ -288,6 +299,13 @@ function TElasticCLient.get_version:string;
 begin
   result:= version.numder;
 end;
+
+////////////////////////////////// cluster /////////////////////////////////////
+function TElasticCLient._cluster_health:IHTTPResponse;
+begin
+ result:= NetHTTPClient.GET(BaseURL+'_cluster/health');
+end;
+
 
 
 end.

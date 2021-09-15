@@ -51,6 +51,7 @@ uses
       function _searchEX(reqest:string): IHTTPResponse;
        //send
       function _bulk(body:string; IndexName:String):IHTTPResponse;
+      function _doc(body:string; IndexName:String):IHTTPResponse;
       // cluster
       function _cluster_health:IHTTPResponse;
       ///
@@ -270,6 +271,20 @@ begin
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
+function TElasticCLient._doc(body:string; IndexName:String):IHTTPResponse;
+var
+  JsonToSend  : TStringStream;
+begin
+  JsonToSend := TStringStream.Create;
+  try
+    JsonToSend.WriteString(body);
+    result:= NetHTTPClient.Post(BaseURL+IndexName+'/_doc/', JsonToSend);
+  finally
+    JsonToSend.Free;
+  end;
+end;
+
+
 function TElasticCLient._bulk(body:string; IndexName:String):IHTTPResponse;
 var
   Request     : TStringList;

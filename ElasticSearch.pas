@@ -20,7 +20,7 @@ uses
       NetHTTPClient: TNetHTTPClient;
       BaseUrl:String;
       version: tversion;
-      parameters: TStringList;
+      parameters: TStringStream;
     public
       host: string;
       port: word;
@@ -83,7 +83,7 @@ begin
   NetHTTPClient.ConnectionTimeout := 1000;
   NetHTTPClient.ResponseTimeout   := 60000;
 
-  parameters:= TStringList.Create;
+  parameters:= TStringStream.Create;
 end;
 
 destructor TElasticCLient.Destroy;
@@ -187,13 +187,15 @@ end;
 
 function TElasticCLient._freeze(IndexName:String):IHTTPResponse;
 begin
-  parameters.Clear;
+  parameters.writestring('{}');
+  parameters.Position := 0;
   result:=NetHTTPClient.POST(BaseURL+IndexName+'/_freeze',parameters);
 end;
 
 function TElasticCLient._unfreeze(IndexName:String):IHTTPResponse;
 begin
-  parameters.Clear;
+  parameters.writestring('{}');
+  parameters.Position := 0;
   result:=NetHTTPClient.POST(BaseURL+IndexName+'/_unfreeze',parameters);
 end;
 

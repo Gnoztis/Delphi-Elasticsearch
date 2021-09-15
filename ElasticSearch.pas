@@ -20,6 +20,7 @@ uses
       NetHTTPClient: TNetHTTPClient;
       BaseUrl:String;
       version: tversion;
+      parameters: TStringList;
     public
       host: string;
       port: word;
@@ -30,9 +31,12 @@ uses
       function connect:boolean;
       function get_version:string;
       //index
+      function indices:IHTTPResponse;
       function CreateIndex(IndexName:String):IHTTPResponse; overload;
       function CreateIndex(IndexName:String; template:string ):IHTTPResponse; overload;
       function DeleteIndex(IndexName:String):IHTTPResponse;
+      function _freeze(IndexName:String):IHTTPResponse;
+      function _unfreeze(IndexName:String):IHTTPResponse;
 
       //template
       function CreateTemplate(template:String):IHTTPResponse;
@@ -76,11 +80,14 @@ begin
   NetHTTPClient.UserAgent         :=  'Delphi for ElasticSearch';
   NetHTTPClient.ConnectionTimeout := 1000;
   NetHTTPClient.ResponseTimeout   := 60000;
+
+  parameters:= TStringList.Create;
 end;
 
 destructor TElasticCLient.Destroy;
 begin
   NetHTTPClient.Free;
+  parameters.Free;
   inherited;
 end;
 
@@ -91,7 +98,6 @@ var
   JSonValue:TJSonValue;
   response: IHTTPResponse;
 begin
-
  BaseUrl:= 'http://'+host+':'+IntToStr(port)+'/';
 
  result:=false;
@@ -149,6 +155,14 @@ begin
 
 end;
 
+////////////////////////////////////////////////////////////////////////////////
+
+function TElasticCLient.indices:IHTTPResponse;
+begin
+   result:=NetHTTPClient.GET(BaseURL+'_cat/indices?format=JSON');
+end;
+
+
 function TElasticCLient.CreateTemplate(template:String):IHTTPResponse;
 begin
   result:=NetHTTPClient.POST(BaseURL+'_template/rusiem?pretty',template);
@@ -168,6 +182,19 @@ function TElasticCLient.DeleteIndex(IndexName:String):IHTTPResponse;
 begin
    result:=NetHTTPClient.Delete(BaseURL+IndexName);
 end;
+
+function TElasticCLient._freeze(IndexName:String):IHTTPResponse;
+begin
+  parameters.Clear;
+  result:=NetHTTPClient.POST(BaseURL+IndexName+'/_freeze',parameters);
+end;
+
+function TElasticCLient._unfreeze(IndexName:String):IHTTPResponse;
+begin
+  parameters.Clear;
+  result:=NetHTTPClient.POST(BaseURL+IndexName+'/_unfreeze',parameters);
+end;
+
 ////////////////////////////////////////////////////////////////////////////////
 function TElasticCLient._task: IHTTPResponse;
 begin
@@ -177,7 +204,7 @@ end;
 
 function TElasticCLient._task(task_id: string): IHTTPResponse;
 begin
-   result:=NetHTTPClient.get(BaseURL+'_tasks/'+task_id);
+   result:=NetHTTPClient.GET(BaseURL+'_tasks/'+task_id);
 end;
 ////////////////////////////////////////////////////////////////////////////////
 function TElasticCLient._search(body:string): string;

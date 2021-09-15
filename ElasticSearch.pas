@@ -87,14 +87,11 @@ begin
   NetHTTPClient.UserAgent         :=  'Delphi for ElasticSearch';
   NetHTTPClient.ConnectionTimeout := 1000;
   NetHTTPClient.ResponseTimeout   := 60000;
-
-  parameters:= TStringStream.Create;
 end;
 
 destructor TElasticCLient.Destroy;
 begin
   NetHTTPClient.Free;
-  parameters.Free;
   inherited;
 end;
 
@@ -198,28 +195,50 @@ end;
 
 function TElasticCLient._freeze(IndexName:String):IHTTPResponse;
 begin
-  parameters.writestring('{}');
-  parameters.Position := 0;
-  result:=NetHTTPClient.POST(BaseURL+IndexName+'/_freeze',parameters);
+  parameters:=TStringStream.Create;
+  try
+    parameters.writestring('{}');
+    parameters.Position := 0;
+    result:=NetHTTPClient.POST(BaseURL+IndexName+'/_freeze',parameters);
+  finally
+   parameters.Free;
+  end;
 end;
 
 function TElasticCLient._unfreeze(IndexName:String):IHTTPResponse;
 begin
-  parameters.writestring('{}');
-  parameters.Position := 0;
-  result:=NetHTTPClient.POST(BaseURL+IndexName+'/_unfreeze',parameters);
+  parameters:=TStringStream.Create;
+  try
+    parameters.writestring('{}');
+    parameters.Position := 0;
+    result:=NetHTTPClient.POST(BaseURL+IndexName+'/_unfreeze',parameters);
+  finally
+   parameters.Free;
+  end;
 end;
 
 function TElasticCLient._forcemerge(IndexName:String):IHTTPResponse;
 begin
-  parameters.Clear;
-  result:=NetHTTPClient.POST(BaseURL+IndexName+'/_forcemerge',parameters);
+  parameters:=TStringStream.Create;
+  try
+    parameters.writestring('{}');
+    parameters.Position := 0;
+    result:=NetHTTPClient.POST(BaseURL+IndexName+'/_forcemerge',parameters);
+  finally
+   parameters.Free;
+  end;
 end;
 
 function TElasticCLient._forcemerge:IHTTPResponse;
 begin
-  parameters.Clear;
-  result:=NetHTTPClient.POST(BaseURL+'_forcemerge',parameters);
+  parameters:=TStringStream.Create;
+  try
+    parameters.writestring('{}');
+    parameters.Position := 0;
+    result:=NetHTTPClient.POST(BaseURL+'_forcemerge',parameters);
+  finally
+   parameters.Free;
+  end;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////

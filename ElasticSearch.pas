@@ -37,6 +37,8 @@ uses
       function DeleteIndex(IndexName:String):IHTTPResponse;
       function _freeze(IndexName:String):IHTTPResponse;
       function _unfreeze(IndexName:String):IHTTPResponse;
+      function _forcemerge(IndexName:String):IHTTPResponse; overload;
+      function _forcemerge:IHTTPResponse; overload;
 
       //template
       function CreateTemplate(template:String):IHTTPResponse;
@@ -193,6 +195,18 @@ function TElasticCLient._unfreeze(IndexName:String):IHTTPResponse;
 begin
   parameters.Clear;
   result:=NetHTTPClient.POST(BaseURL+IndexName+'/_unfreeze',parameters);
+end;
+
+function TElasticCLient._forcemerge(IndexName:String):IHTTPResponse;
+begin
+  parameters.Clear;
+  result:=NetHTTPClient.POST(BaseURL+IndexName+'/_forcemerge',parameters);
+end;
+
+function TElasticCLient._forcemerge:IHTTPResponse;
+begin
+  parameters.Clear;
+  result:=NetHTTPClient.POST(BaseURL+'_forcemerge',parameters);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////

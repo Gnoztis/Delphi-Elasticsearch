@@ -222,8 +222,6 @@ function TElasticCLient._forcemerge(IndexName:String):IHTTPResponse;
 begin
   parameters:=TStringStream.Create;
   try
-    parameters.writestring('{}');
-    parameters.Position := 0;
     result:=NetHTTPClient.POST(BaseURL+IndexName+'/_forcemerge',parameters);
   finally
    parameters.Free;
@@ -234,8 +232,6 @@ function TElasticCLient._forcemerge:IHTTPResponse;
 begin
   parameters:=TStringStream.Create;
   try
-    parameters.writestring('{}');
-    parameters.Position := 0;
     result:=NetHTTPClient.POST(BaseURL+'_forcemerge',parameters);
   finally
    parameters.Free;

@@ -39,6 +39,8 @@ uses
       function _unfreeze(IndexName:String):IHTTPResponse;
       function _forcemerge(IndexName:String):IHTTPResponse; overload;
       function _forcemerge:IHTTPResponse; overload;
+      function _close(IndexName:String):IHTTPResponse;
+      function _open(IndexName:String):IHTTPResponse;
 
       //template
       function CreateTemplate(template:String):IHTTPResponse;
@@ -103,7 +105,7 @@ var
   JSonValue:TJSonValue;
   response: IHTTPResponse;
 begin
- BaseUrl:= 'http://'+host+':'+IntToStr(port)+'/';
+ BaseUrl:= 'http://'+host+':'+port.ToString+'/';
 
  result:=false;
 
@@ -237,6 +239,28 @@ begin
    parameters.Free;
   end;
 end;
+
+
+function TElasticCLient._open(IndexName:String):IHTTPResponse;
+begin
+  parameters:=TStringStream.Create;
+  try
+    result:=NetHTTPClient.POST(BaseURL+'_open',parameters);
+  finally
+   parameters.Free;
+  end;
+end;
+
+function TElasticCLient._close(IndexName:String):IHTTPResponse;
+begin
+  parameters:=TStringStream.Create;
+  try
+    result:=NetHTTPClient.POST(BaseURL+'_close',parameters);
+  finally
+   parameters.Free;
+  end;
+end;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 function TElasticCLient._task: IHTTPResponse;

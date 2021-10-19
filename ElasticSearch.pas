@@ -29,6 +29,8 @@ uses
       destructor Destroy; override;
 
       function connect:boolean;
+      function connected:boolean;
+
       function get_version:string;
       //index
       function indices:IHTTPResponse;
@@ -90,6 +92,8 @@ begin
   NetHTTPClient.UserAgent         :=  'Delphi for ElasticSearch';
   NetHTTPClient.ConnectionTimeout := 1000;
   NetHTTPClient.ResponseTimeout   := 60000;
+
+  version.major:=0;
 end;
 
 destructor TElasticCLient.Destroy;
@@ -98,6 +102,10 @@ begin
   inherited;
 end;
 
+function TElasticCLient.connected:boolean;
+begin
+  result:= (version.major > 0);
+end;
 
 function TElasticCLient.connect;
 var
@@ -316,6 +324,8 @@ var
 const
     CR = #13#10;
 begin
+   IndexName:=LowerCase(IndexName); //fix invalid_index_name_exception. "Invalid index name must be lowercase"
+
    Request    := TStringList.Create;
    Index      := TJSONObject.Create;
    IndexValue := TJSONObject.Create;
@@ -324,7 +334,7 @@ begin
    IndexValue.AddPair('_index', IndexName);
 
    if version.major < 7 then
-     IndexValue.AddPair('_type', 'doc'); //ElasticSearch 5.6
+     IndexValue.AddPair('_type', '_doc'); //ElasticSearch 5.6
 
    Index.AddPair('index', TJSONObject.ParseJSONValue(IndexValue.ToString) );
 

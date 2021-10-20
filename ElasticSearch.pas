@@ -21,9 +21,12 @@ uses
       BaseUrl:String;
       version: tversion;
       parameters: TStringStream;
+      HTTPRequest: TNetHTTPRequest;
     public
       host: string;
       port: word;
+      Asynchronous: boolean;
+      Response: IHTTPResponse;
 
       constructor Create;
       destructor Destroy; override;
@@ -55,16 +58,27 @@ uses
       function _searchEX(reqest:string): IHTTPResponse;
        //send
       function _bulk(body:string; IndexName:String):IHTTPResponse;
+
       function _doc(body:string; IndexName:String):IHTTPResponse;
       // cluster
       function _cluster_health:IHTTPResponse;
       ///
       function GET(url:string):IHTTPResponse;
+    private
+      procedure OnRequestCompleted(const Sender: TObject; const AResponse: IHTTPResponse);
     end;
 
 function Guid:string;
 
 implementation
+const
+    CR = #13#10;
+
+procedure TElasticCLient.OnRequestCompleted(const Sender: TObject; const AResponse: IHTTPResponse);
+begin
+     Response := AResponse;
+end;
+
 
 function Guid:string;
 var
@@ -93,6 +107,9 @@ begin
   NetHTTPClient.ConnectionTimeout := 1000;
   NetHTTPClient.ResponseTimeout   := 60000;
 
+  NetHTTPClient.CustomHeaders['Connection']:= 'Keep-alive';
+
+  HTTPRequest:= TNetHTTPRequest.Create(nil);
   version.major:=0;
 end;
 
@@ -113,6 +130,8 @@ var
   JSonValue:TJSonValue;
   response: IHTTPResponse;
 begin
+ NetHTTPClient.Asynchronous:= false;
+
  BaseUrl:= 'http://'+host+':'+port.ToString+'/';
 
  result:=false;
@@ -147,10 +166,17 @@ begin
 
        end;
 
+       if Asynchronous then
+           begin
+              NetHTTPClient.Asynchronous:= true;
+              NetHTTPClient.OnRequestCompleted  := OnRequestCompleted;
+           end;
+
 
   except
      raise Exception.Create('connection error');
   end;
+
 
   //
 end;
@@ -303,10 +329,13 @@ function TElasticCLient._doc(body:string; IndexName:String):IHTTPResponse;
 var
   JsonToSend  : TStringStream;
 begin
+  IndexName:=LowerCase(IndexName);
+
   JsonToSend := TStringStream.Create;
   try
     JsonToSend.WriteString(body);
-    result:= NetHTTPClient.Post(BaseURL+IndexName+'/_doc/', JsonToSend);
+    JsonToSend.Position := 0;
+    result:= NetHTTPClient.execute('post',BaseURL+IndexName+'/_doc/', JsonToSend);
   finally
     JsonToSend.Free;
   end;
@@ -320,9 +349,6 @@ var
   IndexValue  : TJSONObject;
   JsonToSend  : TStringStream;
   i           : Integer;
-
-const
-    CR = #13#10;
 begin
    IndexName:=LowerCase(IndexName); //fix invalid_index_name_exception. "Invalid index name must be lowercase"
 
@@ -350,6 +376,7 @@ begin
           end;
 
       JsonToSend.Position:=0;
+      //NetHTTPClient.Post(BaseURL+'_bulk', JsonToSend);
       result:= NetHTTPClient.Post(BaseURL+'_bulk', JsonToSend);
    finally
      Request.Free;

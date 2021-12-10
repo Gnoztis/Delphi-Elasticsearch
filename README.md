@@ -1,7 +1,7 @@
 # Delphi-Elasticsearch
 Delphi for Elasticsearch
 
-```
+```Pascal
 var
   JsonObject: TJSONObject;
   SubJsonObject: TJSONObject;

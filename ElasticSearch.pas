@@ -5,7 +5,7 @@ interface
 uses
   System.Net.URLClient, System.Net.HttpClient, System.Net.HttpClientComponent,
   System.Classes, System.SysUtils,
-  json;
+  json, Winapi.Windows;
 
 
   type
@@ -69,16 +69,12 @@ uses
     end;
 
 function Guid:string;
+function LocalTimeToUTC(AValue: TDateTime): TDateTime;
+function estimestamp :string;
 
 implementation
 const
     CR = #13#10;
-
-procedure TElasticCLient.OnRequestCompleted(const Sender: TObject; const AResponse: IHTTPResponse);
-begin
-     Response := AResponse;
-end;
-
 
 function Guid:string;
 var
@@ -95,6 +91,45 @@ if GuidResult = S_OK then
     result:=Copy(s, 2, Length(s) - 2)
   end;
 end;
+
+function LocalTimeToUTC(AValue: TDateTime): TDateTime;
+var
+  ST1, ST2: TSystemTime;
+  TZ: TTimeZoneInformation;
+begin
+  GetTimeZoneInformation(TZ);
+  TZ.Bias := -TZ.Bias;
+  TZ.StandardBias := -TZ.StandardBias;
+  TZ.DaylightBias := -TZ.DaylightBias;
+
+  DateTimeToSystemTime(AValue, ST1);
+
+  SystemTimeToTzSpecificLocalTime(@TZ, ST1, ST2);
+
+  Result := SystemTimeToDateTime(ST2);
+end;
+
+function estimestamp :string;
+var
+    us: string;
+    dt: TDatetime;
+    dtime: TDatetime;
+    formatSettings : TFormatSettings;
+begin
+  dtime:= now;
+  GetLocaleFormatSettings(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), formatSettings);
+  dt := Frac(LocalTimeToUTC(dtime)); //fractional part of day
+  dt := dt * 24*60*60; //number of seconds in that day
+  us := IntToStr(Round(Frac(dt)*1000000));
+
+  result:= Format('%sT%s.%s+0000', [FormatDateTime('yyyy-mm-dd',LocalTimeToUTC(dtime),formatSettings), FormatDateTime('hh:nn:ss',LocalTimeToUTC(dtime),formatSettings), us ]);
+end;
+
+procedure TElasticCLient.OnRequestCompleted(const Sender: TObject; const AResponse: IHTTPResponse);
+begin
+     Response := AResponse;
+end;
+
 
 constructor TElasticCLient.Create;
 begin

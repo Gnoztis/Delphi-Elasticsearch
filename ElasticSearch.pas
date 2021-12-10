@@ -117,7 +117,11 @@ var
     formatSettings : TFormatSettings;
 begin
   dtime:= now;
+  {$WARN SYMBOL_DEPRECATED OFF}
+  {$WARN SYMBOL_PLATFORM OFF}
   GetLocaleFormatSettings(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), formatSettings);
+  {$WARN SYMBOL_PLATFORM ON}
+  {$WARN SYMBOL_DEPRECATED ON}
   dt := Frac(LocalTimeToUTC(dtime)); //fractional part of day
   dt := dt * 24*60*60; //number of seconds in that day
   us := IntToStr(Round(Frac(dt)*1000000));

@@ -27,6 +27,9 @@ uses
       port: word;
       Asynchronous: boolean;
       Response: IHTTPResponse;
+      tls     : boolean;
+      UserName: string;
+      Password: string;
 
       constructor Create;
       destructor Destroy; override;
@@ -66,6 +69,10 @@ uses
       function GET(url:string):IHTTPResponse;
     private
       procedure OnRequestCompleted(const Sender: TObject; const AResponse: IHTTPResponse);
+      procedure NetHTTPClientAuthEvent(const Sender: TObject; AnAuthTarget: TAuthTargetType; const ARealm, AURL: string;
+                var AUserName, APassword: string; var AbortAuth: Boolean;  var Persistence: TAuthPersistenceType);
+      procedure NetHTTPClientValidateServerCertificate(const Sender: TObject;const ARequest: TURLRequest; const Certificate: TCertificate;
+                var Accepted: Boolean);
     end;
 
 function Guid:string;
@@ -145,11 +152,14 @@ begin
   NetHTTPClient.UserAgent         :=  'Delphi for ElasticSearch';
   NetHTTPClient.ConnectionTimeout := 1000;
   NetHTTPClient.ResponseTimeout   := 60000;
-
   NetHTTPClient.CustomHeaders['Connection']:= 'Keep-alive';
+
+  NetHTTPClient.OnValidateServerCertificate := NetHTTPClientValidateServerCertificate;
+  NetHTTPClient.OnAuthEvent                 := NetHTTPClientAuthEvent;
 
   HTTPRequest:= TNetHTTPRequest.Create(nil);
   version.major:=0;
+  tls:= false;
 end;
 
 destructor TElasticCLient.Destroy;
@@ -163,6 +173,26 @@ begin
   result:= (version.major > 0);
 end;
 
+
+procedure TElasticCLient.NetHTTPClientAuthEvent(const Sender: TObject;
+  AnAuthTarget: TAuthTargetType; const ARealm, AURL: string;
+  var AUserName, APassword: string; var AbortAuth: Boolean;
+  var Persistence: TAuthPersistenceType);
+begin
+  if AnAuthTarget = TAuthTargetType.Server then
+  begin
+    AUserName := UserName;
+    APassword := Password;
+  end;
+end;
+
+procedure TElasticCLient.NetHTTPClientValidateServerCertificate(const Sender: TObject;
+  const ARequest: TURLRequest; const Certificate: TCertificate;
+  var Accepted: Boolean);
+begin
+     Accepted := True;
+end;
+
 function TElasticCLient.connect;
 var
   JsonObject:TJSONObject;
@@ -171,7 +201,10 @@ var
 begin
  NetHTTPClient.Asynchronous:= false;
 
- BaseUrl:= 'http://'+host+':'+port.ToString+'/';
+ if tls then
+    BaseUrl:= 'https://'+host+':'+port.ToString+'/'
+ else
+    BaseUrl:= 'http://'+host+':'+port.ToString+'/';
 
  result:=false;
 
@@ -210,7 +243,6 @@ begin
               NetHTTPClient.Asynchronous:= true;
               NetHTTPClient.OnRequestCompleted  := OnRequestCompleted;
            end;
-
 
   except
      raise Exception.Create('connection error');

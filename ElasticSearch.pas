@@ -147,9 +147,9 @@ begin
   inherited Create;
 
   NetHTTPClient := TNetHTTPClient.Create(nil);
-  NetHTTPClient.ContentType       :=  'application/json';
-  NetHTTPClient.AcceptCharSet     :=  'UTF-8';
-  NetHTTPClient.UserAgent         :=  'Delphi for ElasticSearch';
+  NetHTTPClient.ContentType       := 'application/json';
+  NetHTTPClient.AcceptCharSet     := 'UTF-8';
+  NetHTTPClient.UserAgent         := 'Delphi for ElasticSearch';
   NetHTTPClient.ConnectionTimeout := 1000;
   NetHTTPClient.ResponseTimeout   := 60000;
   NetHTTPClient.CustomHeaders['Connection']:= 'Keep-alive';
@@ -195,9 +195,8 @@ end;
 
 function TElasticCLient.connect;
 var
-  JsonObject:TJSONObject;
-  JSonValue:TJSonValue;
   response: IHTTPResponse;
+  JsonValue: TJSONValue;
 begin
  NetHTTPClient.Asynchronous:= false;
 
@@ -213,28 +212,14 @@ begin
 
     if response.StatusCode = 200 then
        begin
-          JsonObject:=TJSONObject.Create;
-          try                            //check Elastic Version
-            JsonObject := TJSONObject.ParseJSONValue(response.ContentAsString(TEncoding.UTF8) ) as TJSONObject;
-            if Assigned(JsonObject) then
-               begin
-                 if Assigned(JsonObject.GetValue('version')) then
-                    begin
-                       JSonValue:=TJSonObject.ParseJSONValue(JsonObject.GetValue('version').ToString);
-                       try
-                         version.numder := JSonValue.GetValue<string>('number');
-                         version.major  := StrToInt(version.numder[1]); // rewrite, temporarily
-                         result:=true;
-                       finally
-                         JSonValue.Free;
-                       end;
-
-                    end;
-
-               end;
-          finally
-            JsonObject.Free;
-          end;
+           JsonValue := TJSONObject.ParseJSONValue(response.ContentAsString(TEncoding.UTF8), False, True);
+           try
+               version.numder := JsonValue.GetValue<string>('version.number');
+               version.major  := StrToInt(version.numder[1]);
+               result:=true;
+           finally
+               JsonValue.Free;
+           end;
 
        end;
 
@@ -430,7 +415,7 @@ begin
    IndexValue.AddPair('_id', TJSONNull.Create);
    IndexValue.AddPair('_index', IndexName);
 
-   if version.major < 7 then
+   if version.major < 8 then
      IndexValue.AddPair('_type', '_doc'); //ElasticSearch 5.6
 
    Index.AddPair('index', TJSONObject.ParseJSONValue(IndexValue.ToString) );
